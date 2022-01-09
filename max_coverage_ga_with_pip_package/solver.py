@@ -39,11 +39,12 @@ capacity = pd.read_excel(file_path, "capacity", header=None).values
 file_path = os.path.join(FILES_DIR, "Project Data.xlsx")
 info = pd.read_excel(file_path, "info", header=None).values
 
+np.random.seed(7)
 
 def f(X):
-    x = X[0:28]
-    y = X[28:56]
-    z = X[56:840]
+    x = np.array(X[0:28])
+    y = np.array(X[28:56])
+    z = np.array(X[56:840])
     obj_value = np.sum(y * demand)
 
     coverage_set = coverage_matrix.flatten()
@@ -61,20 +62,38 @@ def f(X):
     # Max number of facilities constraint penalty
     max_facility_penalty = 0.0
     if np.sum(x) > K:
-        max_facility_penalty = 500 + 1000 * (np.sum(K) - K)
+        max_facility_penalty = 500 + 1000 * (np.sum(x) - K)
 
     # Capacity constraint penalty
+    capacity_penalty = 0.0
+    pen_capacity = []
+    for idx, xi in enumerate(x):
+        if  np.sum(demand * coverage_set * z) > capacity[idx] * xi:
+            pen = capacity[idx] * xi - (np.sum(demand * coverage_set * z))
+            pen_capacity.append(pen)
+    capacity_penalty = sum(pen_capacity)
 
-    return -obj_value + demand_coverage_penalty + 500 * max_facility_penalty
+    return -obj_value * 1000 + demand_coverage_penalty + 5000 * max_facility_penalty + capacity_penalty
 
 def report(output_dict):
     X_best = output_dict["variable"]
     f_best = output_dict["function"]
-    x_optimal = np.array(X_best[0:28])
-    y_optimal = np.array(X_best[28:56])
-    z_optimal = np.array(X_best[56:840]).reshape([28, 28])
+    x_optimal = pd.DataFrame((X_best[0:28]))
+    y_optimal = pd.DataFrame((X_best[28:56]))
+    z_optimal = pd.DataFrame(X_best[56:840].reshape([N, M]))
+
 
     print("x_optimal:", x_optimal, "\n", "y_optimal:", y_optimal, "\n", "z_optimal:", z_optimal, "\n")
+    output_file = "results.xlsx"
+    output_file_path = os.path.join(FILES_DIR, output_file)
+
+    with pd.ExcelWriter(output_file_path) as writer:
+        x_optimal.to_excel(writer, sheet_name='x')
+
+    with pd.ExcelWriter(output_file_path, engine='openpyxl', mode='a') as writer:  
+        y_optimal.to_excel(writer, sheet_name='y')
+        z_optimal.to_excel(writer, sheet_name='z')
+
 
 algorithm_param = {
     'max_num_iteration': maximum_generations,

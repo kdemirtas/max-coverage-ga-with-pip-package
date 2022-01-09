@@ -107,7 +107,9 @@ algorithm_param = {
 }
 
 model=ga(function=f, dimension=840, variable_type='bool', function_timeout=1000, algorithm_parameters=algorithm_param)
-output_dict = model.run()
+
+model.run()
+output_dict = model.output_dict
 report(output_dict)
 
 

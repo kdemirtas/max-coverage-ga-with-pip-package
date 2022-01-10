@@ -6,8 +6,13 @@
         "max_facilities": 8,
         "ga_settings": {
             "population_size": 100,
-            "mutation_probability": 0.5,
-            "maximum_generations": 1000
+            "crossover_probability": 0.5,
+            "mutation_probability": 0.3,
+            "maximum_generations": 1000,
+            "parents_portion": 0.3,
+            "crossover_type": "uniform",
+            "elite_ratio": 0.01,
+            "maximum_generations_without_improvement": 100
         }
     }
 }

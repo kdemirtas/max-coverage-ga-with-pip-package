@@ -1,4 +1,5 @@
 import os
+import io
 import json
 
 import numpy as np
@@ -21,6 +22,11 @@ M = input_settings["n_locations_possible_facility"]
 maximum_generations = input_settings["ga_settings"]["maximum_generations"]
 mutation_probability = input_settings["ga_settings"]["mutation_probability"]
 population_size = input_settings["ga_settings"]["population_size"]
+crossover_probability = input_settings["ga_settings"]["crossover_probability"]
+parents_portion = input_settings["ga_settings"]["parents_portion"]
+elite_ratio = input_settings["ga_settings"]["elite_ratio"]
+maximum_generations_without_improvement = input_settings["ga_settings"]["maximum_generations_without_improvement"]
+crossover_type = input_settings["ga_settings"]["crossover_type"]
 
 # Parse distances
 file_path = os.path.join(FILES_DIR, "Distance Matrix.xlsx")
@@ -91,7 +97,6 @@ def report(output_dict):
     y_optimal = pd.DataFrame((X_best[28:56]))
     z_optimal = pd.DataFrame(X_best[56:840].reshape([N, M]))
 
-
     print("x_optimal:", x_optimal, "\n", "y_optimal:", y_optimal, "\n", "z_optimal:", z_optimal, "\n")
     output_file = "results.xlsx"
     output_file_path = os.path.join(FILES_DIR, output_file)
@@ -103,21 +108,59 @@ def report(output_dict):
         y_optimal.to_excel(writer, sheet_name='y')
         z_optimal.to_excel(writer, sheet_name='z')
 
+    facility_indexes = np.where(x_optimal == 1)
+    locations_open = info[facility_indexes]
+
+    demand_covered_indexes = np.where(y_optimal == 1)
+    demand_locations_covered = info[demand_covered_indexes]
+
+    demand_uncovered_indexes = np.where(y_optimal == 0)
+    demand_locations_uncovered = info[demand_uncovered_indexes]
+
     summary_file = "summary.txt"
-    summary_file_path = os.path.join(FILES_DIR, summary_file_path)
-    with open(summary_file_path, "w") as fp:
-        pass
+    summary_file_path = os.path.join(FILES_DIR, summary_file)
+    with io.open(summary_file_path, "w", encoding="utf-8") as fp:
+        fp.write("Genetic Algorithm Solver Summary\n")
+        fp.write("Exit Code: -- Solver Status:\n")
+        fp.write("x:\n")
+        fp.write(x_optimal.to_string())
+        fp.write("\n\n")
+        fp.write("y:\n")
+        fp.write(y_optimal.to_string())
+        fp.write("\n\n")
+        fp.write("z:\n")
+        fp.write(z_optimal.to_string())
+        fp.write("\n\n")
+        fp.write("Locations Selected:\n")
+        fp.write("-------------------\n")
+        for loc in locations_open:
+            fp.write(loc)
+            fp.write("\n")
+
+        fp.write("\n")
+        fp.write("Demand Locations Covered:\n")
+        fp.write("-------------------\n")
+        for loc in demand_locations_covered:
+            fp.write(loc)
+            fp.write("\n")
+
+        fp.write("\n")
+        fp.write("Demand Locations Uncovered:\n")
+        fp.write("-------------------\n")
+        for loc in demand_locations_uncovered:
+            fp.write(loc)
+            fp.write("\n")
 
 
 algorithm_param = {
     'max_num_iteration': maximum_generations,
     'population_size': population_size,
     'mutation_probability': mutation_probability,
-    'elit_ratio': 0.01,
-    'crossover_probability': 0.5,
-    'parents_portion': 0.3,
-    'crossover_type':'uniform',
-    'max_iteration_without_improv':100
+    'elit_ratio': elite_ratio,
+    'crossover_probability': crossover_probability,
+    'parents_portion': parents_portion,
+    'crossover_type':crossover_type,
+    'max_iteration_without_improv':maximum_generations_without_improvement
 }
 
 model=ga(function=f, dimension=840, variable_type='bool', function_timeout=1000, algorithm_parameters=algorithm_param)
@@ -125,6 +168,3 @@ model=ga(function=f, dimension=840, variable_type='bool', function_timeout=1000,
 model.run()
 output_dict = model.output_dict
 report(output_dict)
-
-
-print("Done")

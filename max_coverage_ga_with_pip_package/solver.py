@@ -88,7 +88,13 @@ def f(X):
             if zij[i] > x[j]:
                 assignment_penalty = assignment_penalty + 1000
 
-    return -obj_value * 1000 + demand_coverage_penalty + 5000 * max_facility_penalty + capacity_penalty + assignment_penalty
+    # Self assignment constraint penalty
+    self_assignment_penalty = 0.0
+    for i in range(N):
+        if x[i] > y[i]:
+            self_assignment_penalty = self_assignment_penalty + 1000
+
+    return -obj_value * 1000 + demand_coverage_penalty + 5000 * max_facility_penalty + capacity_penalty + assignment_penalty + self_assignment_penalty
 
 def report(output_dict):
     X_best = output_dict["variable"]
@@ -121,7 +127,6 @@ def report(output_dict):
     summary_file_path = os.path.join(FILES_DIR, summary_file)
     with io.open(summary_file_path, "w", encoding="utf-8") as fp:
         fp.write("Genetic Algorithm Solver Summary\n")
-        fp.write("Exit Code: -- Solver Status:\n")
         fp.write("x:\n")
         fp.write(x_optimal.to_string())
         fp.write("\n\n")

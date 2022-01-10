@@ -73,7 +73,16 @@ def f(X):
             pen_capacity.append(pen)
     capacity_penalty = sum(pen_capacity)
 
-    return -obj_value * 1000 + demand_coverage_penalty + 5000 * max_facility_penalty + capacity_penalty
+    # Assignment constraint penalty
+    assignment_penalty = 0.0
+    z = z.reshape((N, M))
+    for j in range(M):
+        zij = z[:][j]
+        for i in range(N):
+            if zij[i] > x[j]:
+                assignment_penalty = assignment_penalty + 1000
+
+    return -obj_value * 1000 + demand_coverage_penalty + 5000 * max_facility_penalty + capacity_penalty + assignment_penalty
 
 def report(output_dict):
     X_best = output_dict["variable"]
@@ -93,6 +102,11 @@ def report(output_dict):
     with pd.ExcelWriter(output_file_path, engine='openpyxl', mode='a') as writer:  
         y_optimal.to_excel(writer, sheet_name='y')
         z_optimal.to_excel(writer, sheet_name='z')
+
+    summary_file = "summary.txt"
+    summary_file_path = os.path.join(FILES_DIR, summary_file_path)
+    with open(summary_file_path, "w") as fp:
+        pass
 
 
 algorithm_param = {
